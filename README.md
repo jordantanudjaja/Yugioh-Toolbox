@@ -16,16 +16,16 @@ Anything related to Yugioh (Card Database, Updating new cards, Banlist, Card Pri
     through web scraping the website: https://yugioh.fandom.com</li>
 </ul>
 
-<h3>Jupyter Notebooks</h3>
+<h2>Jupyter Notebooks</h2>
 <ul>
     <li><b>Analytics and Checkup:</b> Notebook platform for doing quality checkup on the card database and doing any type of
     data analysis, visualization and editing or updating card data</li>
     <li><b>Card Database Initialization:</b> First notebook created to initialize the Yugioh Card Database.csv file. It contains
-    functions that was used to scrape the https://yugioh.fandom.com for card sets (packs, decks, collectible tins etc) urls
+    functions that were used to scrape the https://yugioh.fandom.com for card sets (packs, decks, collectible tins etc) urls
     and grab each card's information and store it in a DataFrame format </li>
 </ul>
 
-<h3>Main Python file</h3>
+<h2>Main Python file</h2>
 Python Script that provides the user with an interface to interact with the Yugioh Card Database. It has 4 functions:
 <ol>
     <li>Updating new cards to the database individually or in small amounts using their own unique URL</li>
