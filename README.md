@@ -4,23 +4,23 @@ Anything related to Yugioh (Card Database, Updating new cards, Banlist, Card Pri
 <h2>yugioh Package</h2>
 <h3>Data</h3>
 <ul>
-    <li>Yugioh Card Database.csv: CSV file that contains 99% of Yugioh cards up to the current Link format</li>
-    <li>Yugioh Card Database (Backup).csv: Same csv file as Yugioh Card Database.csv that serves as a backup
+    <li><b>Yugioh Card Database.csv:</b> CSV file that contains 99% of Yugioh cards up to the current Link format</li>
+    <li><b>Yugioh Card Database (Backup).csv:</b> Same csv file as Yugioh Card Database.csv that serves as a backup
     file in case something happens to the original file</li>
 </ul>
 
 <h3>Modules</h3>
 <ul>
-    <li>__init__: Initialization Module</li>
-    <li>ygfandom: Module containing classes to view and make changes to the Yugioh Card Database.csv file
+    <li><b>__init__:</b> Initialization Module</li>
+    <li><b>ygfandom:</b> Module containing classes to view and make changes to the Yugioh Card Database.csv file
     through web scraping the website: https://yugioh.fandom.com</li>
 </ul>
 
 <h3>Jupyter Notebooks</h3>
 <ul>
-    <li>Analytics and Checkup: Notebook platform for doing quality checkup on the card database and doing any type of
+    <li><b>Analytics and Checkup:</b> Notebook platform for doing quality checkup on the card database and doing any type of
     data analysis, visualization and editing or updating card data</li>
-    <li>Card Database Initialization: First notebook created to initialize the Yugioh Card Database.csv file. It contains
+    <li><b>Card Database Initialization:</b> First notebook created to initialize the Yugioh Card Database.csv file. It contains
     functions that was used to scrape the https://yugioh.fandom.com for card sets (packs, decks, collectible tins etc) urls
     and grab each card's information and store it in a DataFrame format </li>
 </ul>
