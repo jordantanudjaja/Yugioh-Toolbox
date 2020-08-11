@@ -1,4 +1,4 @@
-# Yugioh-Python-Package
+# Yugioh Web-Scraping Toolbox
 Anything related to Yugioh (Card Database, Updating new cards, Banlist, Card Prices) are all here
 
 <h2>yugioh Package</h2>
