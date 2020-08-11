@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-#
-# Author: Jordan Tanudjaja
-#
-# Date: 30 July 2020
-#
-# Description: Python module for anything related to yugioh in (https://yugioh.fandom.com)
-# and the 'Yugioh Card Database.csv' file that was initialized on July 29 2020 in this directory.
-# Banlist source is taken from (https://www.yugioh-card.com/uk/gameplay/detail.php?id=1155)
+"""
+Created on Thu Jul 30 18:06:24 2020
 
+Author: Jordan Tanudjaja
+
+Python module for anything related to yugioh in (https://yugioh.fandom.com)
+and the 'Yugioh Card Database.csv' file that was initialized on July 29 2020 in this directory.
+Banlist source is taken from (https://www.yugioh-card.com/uk/gameplay/detail.php?id=1155)
+"""
 
 import pandas as pd
 import numpy as np
@@ -15,7 +15,6 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import unicodedata
-import textdistance
 
 class DbHandler:
     """
@@ -23,28 +22,35 @@ class DbHandler:
     """
     def __init__(self, database_filepath = 'yugioh/Data/Yugioh Card Database.csv'):
         """
-        Initialize the csv file to a dataframe in pandas
-
         Parameters:
         -----------
         database_filepath: str
-            The value has to be in a CSV format
+            Default value: 'yugioh/Data/Yugioh Card Database.csv'
+            The value has to be in a CSV format, and the default path leads to a
+            file that contains all the information of yugioh cards up to the current meta
 
-            Default value is the Yugioh Card Database file, which contains all
-            the information of yugioh cards up to the current meta
+        Variables:
+        ----------
+        Public:
+            database_filepath: str
+                The filepath that leads to the specified Yugioh Card Database
+
+        Private:
+            card_database: DataFrame()
+                The Yugioh Card Database that is read from the database_filepath
         """
         self.database_filepath = database_filepath
-        self.card_database = pd.read_csv(database_filepath, keep_default_na = False)
+        self.__card_database = pd.read_csv(database_filepath, keep_default_na = False)
 
     def get_card_database(self):
         """
-        Method that reads the current database file and returns it in a DataFrame format
+        Returns the current database file in a DataFrame format
         """
-        return self.card_database
+        return self.__card_database
 
     def set_card_database(self, df):
         """
-        Method to set the yugioh card database with a dataframe as its argument. It is used
+        Set method that sets the yugioh card database with a dataframe as its argument. It is used
         to reflect any outside changes made to the database when assigning the database to
         any outside variables in the first place
 
@@ -56,7 +62,7 @@ class DbHandler:
             Bug: Currently, there is no way to check the dataframe inputted is a yugioh
             related dataframe
         """
-        self.card_database = df
+        self.__card_database = df
 
     def save_card_database(self):
         """
@@ -65,13 +71,34 @@ class DbHandler:
         """
         # Required to set index to Card Name before writing to the csv file in order to prevent insertion
         # of additonal Unnamed columns when reading the csv file in get_card_database()
-        self.card_database.set_index('Card Name').to_csv(self.database_filepath)
+        self.__card_database.set_index('Card Name').to_csv(self.database_filepath)
         print('Save successful')
+
+    def search_card_name(self, name):
+        """
+        Returns a dataframe of the cards that were searched, if the cards are not in the database,
+        of if there are errors, it will print out the name of the card that was erroneous
+
+        Parameters:
+        -----------
+        name: str or list
+            name or names of the cards that are meant to be searched
+        """
+        df = self.__card_database
+        if type(name) == str:
+            name = [name]
+        try:
+            indexes_to_search = [df.set_index('Card Name').index.get_loc(n) for n in name]
+        except KeyError as e:
+            print(f'{e} is not in database, make sure you check your spellings and upper/lower case letters, and cross-reference with the database using locate_card method')
+            return pd.DataFrame() # Returning empty dataframe
+        else:
+            return df.iloc[indexes_to_search]
 
     def locate_card(self, card_url):
         """
-        Method to determine whether or not a specific card already resides in the database and if it is,
-        it returns the index of the card in the database
+        Returns the current index of a specific card that already resides in the database, and returns
+        nothing if the card does not exist
 
         Parameters:
         ----------
@@ -79,7 +106,7 @@ class DbHandler:
             The card url has to be from https://yugioh.fandom.com and has to be a card URL, not a booster
             pack URL or a deck URL
         """
-        df = self.card_database
+        df = self.__card_database
         if df[df['Reference'] == card_url].index.size != 0:
             card_index = df[df['Reference'] == card_url].index[0]
             print(f"{df['Card Name'].iloc[card_index]} is already in the Yugioh database and it is located at index: {card_index}")
@@ -90,9 +117,8 @@ class DbHandler:
 
     def add_card(self, card_dict):
         """
-        Method to add new cards into the database
-
-        Returns the updated database after a successful addition, otherwise, it will not return anything
+        Returns the updated database after a successful addition of a new card, otherwise, it will not
+        return anything
 
         Parameters:
         ----------
@@ -102,22 +128,22 @@ class DbHandler:
             a local variable before invoking this method
         """
         if self.locate_card(card_dict['Reference']) == None:
-            self.card_database = self.card_database.append(card_dict, ignore_index = True)
+            self.__card_database = self.__card_database.append(card_dict, ignore_index = True)
             print(f"{card_dict['Card Name']} is successfully added")
             self.save_card_database()
-            return self.card_database
+            return self.__card_database
         else:
             print(f"{card_dict['Card Name']} was not added into the database")
 
     def regulatory_checkup(self):
         """
-        Method used to perform quality check on the card database and return a dataframe with cards
-        that have errors
+        Returns a dataframe that consist of cards that needs to be updated in the database or contain
+        erroneous values
 
         Errors are reflected in the Card Type column. If the Card Type of any card is not Monster, Spell
         or Trap, then some kind of error is found when adding that card to the database
         """
-        df = self.card_database
+        df = self.__card_database
 
         # Dataframe that contains a list of cards with errors when they were added to the database or
         # cards that have status: Not yet released and needs to be updated
@@ -131,185 +157,62 @@ class DbHandler:
             print('Some updates needed')
         return checkup_df
 
-    def banlist_update(self, banlist_url = 'https://www.yugioh-card.com/uk/gameplay/detail.php?id=1155'):
-        """
-        Method used to update the database with the up to date competitive status of cards in the banlist
 
-        The method scrapes the data from the URL and cross-references it with the competitve status of the
-        cards in the current database, and updates them accordingly
-
-        Bug: Some of the cards in this URL are not fully scraped by the method
-
-        Parameters:
-        -----------
-        banlist_url: str
-            The default value is shown above, and this method only works with the URL from above, and no
-            other URLs
-        """
-        # url for accessing the current banlist
-        # read_html does not work for this website, hence we have to manually scrape the table for information
-        banlist_source = requests.get(banlist_url)
-
-        if banlist_source.status_code == 200:
-            banlist_source_html = BeautifulSoup(banlist_source.text.encode('utf-8'), 'html.parser')
-
-        # Creating 2 temporary lists, banlist cards contains the names of the cards in the banlist
-        # update_status contains the current competitive status of those cards
-        banlist_cards = list()
-        uptodate_status = list()
-
-        for tr in banlist_source_html.find_all('tr'):
-            banlist_cards.append([td.text for td in tr.find_all('td', attrs = {'class': 'xl763'})])
-            uptodate_status.append([td.text for td in tr.find_all('td', attrs = {'class': 'xl753'})])
-
-        # Editing the lists to combine card names and statuses into the banlist_card list
-        for i in range(len(banlist_cards)):
-            if len(banlist_cards[i]) != 0:
-                banlist_cards[i][1] = uptodate_status[i][1]
-
-        df = self.card_database
-
-        # Block of code for checking the status of the current cards in the database and cross-referencing to
-        # the banlist
-        for card in banlist_cards:
-            if len(card) != 0:
-                try:
-                    if card[0] in df['Card Name'].values:
-                        db_name = df[df['Card Name'] == card[0]]['Card Name'].iloc[0]
-                    else:
-                        df['txtdistance'] = df['Card Name'].apply(lambda x: textdistance.levenshtein(card[0], x))
-                        db_name = df[df['txtdistance'] <= 2]['Card Name'].iloc[0]
-                        df.drop(columns = ['txtdistance'], inplace = True)
-
-                    if df[df['Card Name'] == db_name]['Competitive Status (TCG Advanced)'].iloc[0] == card[1]:
-                        print(f"{db_name}'s status is the same ({card[1]}), no change needed")
-                    elif card[1] == 'No longer on list':
-                        if df[df['Card Name'] == db_name]['Competitive Status (TCG Advanced)'].iloc[0] != 'Unlimited':
-                            df['Competitive Status (TCG Advanced)'].loc[df[df['Card Name'] == db_name].index] = 'Unlimited'
-                            print(f"{db_name}'s status is changed to Unlimited")
-                    else:
-                        df['Competitive Status (TCG Advanced)'].loc[df[df['Card Name'] == db_name].index] = card[1]
-                        print(f"{db_name}'s status is changed to {card[1]}")
-                except:
-                    print(f'{card[0]} was not found in database, use locate_card method to check if the card is actually in the database')
-
-        self.card_database = df
-        self.save_card_database()
-
-
-
-class WebScraper:
+class YgScraper:
     """
         Class for scraping the https://yugioh.fandom website to get the URLs for cards from card sets URLs
         and translating the information to a readable format
     """
-    def __init__(self, card_url_list = []):
+    def __init__(self):
         """
-        Initialize the URLs to its own local variables when they are passed as arguments
+        Variables:
+        ---------
+        Public:
+            card_url_list: list
+                Holds the list of card URLs interested in scraping
+
+        Private:
+            card_details = list of dictionaries
+                Holds the list of card details that were scraped from the urls in card_url_list, each card
+                detail is in the format of a dictionary
+        """
+        self.card_url_list = []
+        self.__card_details = []
+
+
+    def __atk_def_link_parser(atk_def_link):
+        """
+        Returns a tuple of the (ATK, DEF/LINK) property of a yugioh monster card
+
+        Private method that is invoked in the set_card_details method
 
         Parameters:
-        -----------
-        card_url_list: list
-            This is the list of card urls that the user wants to scrape to get information about the cards,
-            the list does not have to be from a card set, it can be any list of random cards
-
-            Default value is an empty list
+        ----------
+        atk_def_link : str
+            The ATK/DEF or ATK/LINK property of a yugioh monster card, it is passed as a string value
+            during the scraping process
         """
-        # if-else block to make sure the argument initialized is of type list and not
-        # other types
-        if type(card_url_list) != list:
-            print(type(card_url_list))
-            raise TypeError('Make sure you put your argument as a list, not as a string!!')
-        else:
-            self.card_url_list = card_url_list
+        pattern_atk = r'^\w*\?*'
+        pattern_def_link = r'\w*\?*$'
 
-        self.card_details = []
-        # if-else block code to initialize card_details with whatever card url that was
-        # inputted when the object was created
-        if len(card_url_list) != 0:
-            for card_url in card_url_list:
-                try:
-                    self.set_card_details(card_url)
-                except:
-                     print(f'Check the url again {card_url} and see if there is anything fishy')
-                     pass
+        # re.match only checks for a match at the beginning of the string, but it is quicker than search
+        try:
+            ATK = int(re.match(pattern_atk, atk_def_link).group(0))
+        except (ValueError):
+            ATK = re.match(pattern_atk, atk_def_link).group(0)
 
-    def set_card_urls(self, card_set_url):
-        """
-        Method that scrapes a card set URL (packs, decks, reprint sets, tins) and sets all the urls of
-        each card from the card set in a list format to the object variable, card_url_list
+        # re.search checks for a match anywhere in the string
+        try:
+            DEF_LINK = int(re.search(pattern_def_link, atk_def_link).group(0))
+        except ValueError:
+            DEF_LINK = re.search(pattern_def_link, atk_def_link).group(0)
 
-        This is an automatic way of getting the card urls of cards in a set rather than appending each
-        individual card urls to the list one by one
+        return (ATK, DEF_LINK)
 
-        Parameters:
-        -----------
-        card_set_url: str
-            The url of the card set, it has to be a card set and not an individual card
-        """
-        card_set_source = requests.get(card_set_url)
-
-        if card_set_source.status_code == 200:
-            card_set_html = BeautifulSoup(card_set_source.text.encode('utf-8'), 'html.parser')
-
-        class_or_id = 'class'
-        attribute_name = "wikitable"
-        # Code hacks for 2 card pack URLs
-        if card_set_url == 'https://yugioh.fandom.com/wiki/Duelist_Pack:_Kite':
-            attribute_name = "sortable"
-        elif card_set_url == 'https://yugioh.fandom.com/wiki/Collection_Pack_2020':
-            class_or_id = 'id'
-            attribute_name = 'Top_table'
-
-        card_url_list = []
-
-        for card_table in card_set_html.find_all('table', attrs = {class_or_id: attribute_name}):
-            # Building a table of hyperlinks because pd.read_html does not read the hyperlinks, but only reads the unlinked
-            # text of tables
-            record = list()
-            for tr in card_table.findAll("tr"):
-                ths = tr.findAll("th")
-                if ths != []:
-                    columns = [th.text.replace('\n', '').strip() for th in ths]
-                else:
-                    row = list()
-                    for td in tr.find_all('td'):
-                        try:
-                            row.append(td.a['href'])
-                        except KeyError:
-                            row.append(td.a.text)
-                        except TypeError:
-                            row.append(td.text)
-                    record.append(row)
-
-            card_set_df = pd.DataFrame(data = record, columns = columns)
-            try:
-                card_set_df.rename(columns = {'English name': 'Card Name'}, inplace = True)
-                # Raise keyword is used because KeyError was handled previously above, thus raise is
-                # needed to  reraise the KeyError if it comes up again
-                raise KeyError()
-            except KeyError:
-                card_set_df.rename(columns = {'Name': 'Card Name'}, inplace = True)
-            finally:
-                # Filtering out the links with no 'wiki' in them, all legit cards in the yugioh fandom site has wiki in their urls
-                card_set_df['Card Name'] = card_set_df['Card Name'].apply(lambda x: np.where(x.find('wiki') != -1, x, 'Not a link'))
-                card_set_df = card_set_df[card_set_df['Card Name'] != 'Not a link']
-                # Adding yugioh.fandom in front of the link to complete the URL
-                card_set_df['Card Name'] = card_set_df['Card Name'].apply(lambda x: 'https://yugioh.fandom.com' + x)
-                card_url_list.extend(list(card_set_df['Card Name']))
-
-        self.card_url_list = list(set(card_url_list))
-
-    def get_card_urls(self):
-        """
-        Method to return the list of card urls
-        """
-        self.card_url_list = list(set(self.card_url_list)) # To remove duplicate urls
-        return self.card_url_list
 
     def set_card_details(self, url):
         """
-        Method that scrapes the card url in its argument and sets the details of the card to a
+        Set method that scrapes the card url in its argument and sets the details of the card to a
         dictionary in a user-readable format
 
         Parameters:
@@ -351,25 +254,6 @@ class WebScraper:
             indirect_archetype_series_support = set()
             competitive_status = 'N/A'
 
-            # Function to handle the ATK and DEF/LINK properties of a monster card
-            def atk_def_link_parser(atk_def_link):
-                pattern_atk = r'^\w*\?*'
-                pattern_def_link = r'\w*\?*$'
-
-                # re.match only checks for a match at the beginning of the string, but it is quicker than search
-                try:
-                    ATK = int(re.match(pattern_atk, atk_def_link).group(0))
-                except (ValueError):
-                    ATK = re.match(pattern_atk, atk_def_link).group(0)
-
-                # re.search checks for a match anywhere in the string
-                try:
-                    DEF_LINK = int(re.search(pattern_def_link, atk_def_link).group(0))
-                except ValueError:
-                    DEF_LINK = re.search(pattern_def_link, atk_def_link).group(0)
-
-                return (ATK, DEF_LINK)
-
             # Try block to handle the card information, and any errors that occur
             # Some cards may have careless mistakes that or missing information that is not in the norm and impossible
             # to check the specific error encountered
@@ -408,14 +292,14 @@ class WebScraper:
                     # Try-Block to handle ATK, DEF, and LINK discrepancies of LINK and non-LINK monsters
                     try:
                         atk_def_link = card_details_df['Card Properties'].loc['ATK / DEF']
-                        DEF = atk_def_link_parser(atk_def_link)[1]
+                        DEF = self.__atk_def_link_parser(atk_def_link)[1]
                         LINK = 'N/A'
                     except KeyError:
                         atk_def_link = card_details_df['Card Properties'].loc['ATK / LINK']
-                        LINK = atk_def_link_parser(atk_def_link)[1]
+                        LINK = self.__atk_def_link_parser(atk_def_link)[1]
                         DEF = 'N/A'
                     finally:
-                        ATK = atk_def_link_parser(atk_def_link)[0]
+                        ATK = self.__atk_def_link_parser(atk_def_link)[0]
 
                     # Try-Block to handle the properties of Pendulum Monsters
                     try:
@@ -489,11 +373,111 @@ class WebScraper:
                 'Reference': url,
                 }
 
-            self.card_details.append(card_dict)
+            self.__card_details.append(card_dict)
 
     def get_card_details(self):
         """
-        Method to return the card details in a list format
+        Returns the card details in a list format from the set_card_details method
         """
-        self.card_details = [i for n, i in enumerate(self.card_details) if i not in self.card_details[n + 1:]]  # To remove duplicate cards
-        return self.card_details
+        self.__card_details = [i for n, i in enumerate(self.__card_details) if i not in self.__card_details[n + 1:]]  # To remove duplicate cards
+        return self.__card_details
+
+    def set_card_urls(self, card_set_url):
+        """
+        Set method that scrapes a card set URL (packs, decks, reprint sets, tins) and sets all the urls of
+        each card from the card set in a list format to the object variable, card_url_list
+
+        This is an automatic way of getting the card urls of cards in a set rather than appending each
+        individual card urls to the list one by one
+
+        Parameters:
+        -----------
+        card_set_url: str
+            The url of the card set, it has to be a card set, and not an individual card
+        """
+        card_set_source = requests.get(card_set_url)
+
+        if card_set_source.status_code == 200:
+            card_set_html = BeautifulSoup(card_set_source.text.encode('utf-8'), 'html.parser')
+
+        class_or_id = 'class'
+        attribute_name = "wikitable"
+        # Code hacks for 2 card pack URLs
+        if card_set_url == 'https://yugioh.fandom.com/wiki/Duelist_Pack:_Kite':
+            attribute_name = "sortable"
+        elif card_set_url == 'https://yugioh.fandom.com/wiki/Collection_Pack_2020':
+            class_or_id = 'id'
+            attribute_name = 'Top_table'
+
+        card_url_list = []
+
+        for card_table in card_set_html.find_all('table', attrs = {class_or_id: attribute_name}):
+            # Building a table of hyperlinks because pd.read_html does not read the hyperlinks, but only reads the unlinked
+            # text of tables
+            record = list()
+            for tr in card_table.findAll("tr"):
+                ths = tr.findAll("th")
+                if ths != []:
+                    columns = [th.text.replace('\n', '').strip() for th in ths]
+                else:
+                    row = list()
+                    for td in tr.find_all('td'):
+                        try:
+                            row.append(td.a['href'])
+                        except KeyError:
+                            row.append(td.a.text)
+                        except TypeError:
+                            row.append(td.text)
+                    record.append(row)
+
+            card_set_df = pd.DataFrame(data = record, columns = columns)
+            try:
+                card_set_df.rename(columns = {'English name': 'Card Name'}, inplace = True)
+                # Raise keyword is used because KeyError was handled previously above, thus raise is
+                # needed to  reraise the KeyError if it comes up again
+                raise KeyError()
+            except KeyError:
+                card_set_df.rename(columns = {'Name': 'Card Name'}, inplace = True)
+            finally:
+                # Filtering out the links with no 'wiki' in them, all legit cards in the yugioh fandom site has wiki in their urls
+                card_set_df['Card Name'] = card_set_df['Card Name'].apply(lambda x: np.where(x.find('wiki') != -1, x, 'Not a link'))
+                card_set_df = card_set_df[card_set_df['Card Name'] != 'Not a link']
+                # Adding yugioh.fandom in front of the link to complete the URL
+                card_set_df['Card Name'] = card_set_df['Card Name'].apply(lambda x: 'https://yugioh.fandom.com' + x)
+                card_url_list.extend(list(card_set_df['Card Name']))
+
+        self.card_url_list.extend(list(set(card_url_list)))
+
+        # Automatically adding the card details of each card in card url list to the card_details instance variable
+        for link in self.card_url_list:
+            try:
+                self.set_card_details(link)
+            except:
+                 print(f'Check the url again {link} and see if there is anything fishy')
+                 pass
+
+    def add_card_urls(self, urls):
+        """
+        Method that adds any specified card urls to the current card_url_list
+
+        Parameters:
+        -----------
+        urls: tuple of strings
+            Indiviual card url or multiple urls to be added into the current card_url_list
+        """
+        self.card_url_list.extend(urls)
+        self.card_url_list = list(set(self.card_url_list))
+        for link in self.card_url_list:
+            try:
+                self.set_card_details(link)
+            except:
+                 print(f'Check the url again {link} and see if there is anything fishy')
+                 pass
+
+
+    def get_card_urls(self):
+        """
+        Returns the list of card urls that was initialized or added from the set_card_urls method
+        """
+        self.card_url_list = list(set(self.card_url_list)) # To remove duplicate urls
+        return self.card_url_list
