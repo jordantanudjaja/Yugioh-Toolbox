@@ -8,12 +8,19 @@ Script for interacting with the Yugioh Card Database to either update cards,
 check the banlist, or inspect any cards that are erroneous in the database
 """
 
+import time
+import pandas as pd
+from tabulate import tabulate
+import textwrap
+
 from yugioh import ygfandom as ygf
 from yugioh import banlist
 from yugioh import tcgplayer as tcg
-import time
 
 if __name__ == '__main__':
+
+        pd.options.display.max_columns = None
+        pd.options.display.width = None
 
         NUM_OPTIONS = 7
 
@@ -27,34 +34,29 @@ if __name__ == '__main__':
         7) Plan shopping cart for purchasing cards in the current Yugioh Card Database
         """
 
-        answer = input(f"""
-        Welcome to Yugioh Card Database (YCD) Interface! What would you like to do today?
-
-        {OPTIONS}
-
-        Choose from option 1 to {NUM_OPTIONS}: """)
+        answer = input("Welcome to Yugioh Card Database (YCD) Interface! What would you like to do today? \n"
+                       f"{OPTIONS} \n"
+                       f"Choose from option 1 to {NUM_OPTIONS}: ")
 
         while True: # Do-while loop to make sure the user enters in the correct option
             try:
                 answer = int(answer)
             except ValueError:
-                answer = input(f"""
-        Invalid Answer! Select an option between 1 and {NUM_OPTIONS} to continue: """)
+                answer = input(f"Invalid Answer! Select an option between 1 and {NUM_OPTIONS} to continue: ")
             else:
                 if int(answer) not in range(1, NUM_OPTIONS + 1):
-                    answer = input(f"""
-        Invalid Number! Select an option between 1 and {NUM_OPTIONS} to continue: """)
+                    answer = input(f"Invalid Number! Select an option between 1 and {NUM_OPTIONS} to continue: ")
                 else:
                     answer = int(answer)
                     break
-
+        print('\n')
         duelist = ygf.DbHandler() # Instantiating a DbHandler() object to reference the Yugioh Card Database
 
         while answer in range(1, NUM_OPTIONS + 1):
+
+            # Code block to handle Option 1
             if answer == 1:
-                input_string = input("""
-            Insert card URLs separated by a SPACE:
-            """)
+                input_string = input("Insert card URLs separated by a SPACE:\t")
                 card_url_list = input_string.split(' ')
 
                 yg_card = ygf.YgScraper() # Instantiating a YgScraper() object to scrape the site for card setails
@@ -64,10 +66,9 @@ if __name__ == '__main__':
                 for card in card_dict_list:
                     duelist.add_card(card)
 
+            # Code block to handle Option 2
             elif answer == 2:
-                input_string = input("""
-            Insert the card set URL:
-            """)
+                input_string = input("Insert the card set URL: ")
 
                 yg_card_set = ygf.YgScraper() # Instantiating a YgScraper() object to scrape the site for card urls
                                               # and card details
@@ -86,31 +87,32 @@ if __name__ == '__main__':
                 for card in card_dict_list:
                     duelist.add_card(card)
 
+            # Code block to handle Option 3
             elif answer == 3:
                 updated_df = banlist.banlist_update(duelist)
 
+            # Code block to handle Option 4
             elif answer == 4:
-                updates_needed_df = duelist.regulatory_checkup()
-                print(updates_needed_df)
+                updates_needed_df = duelist.regulatory_checkup()[['Card Name', 'Card Type', 'Competitive Status (TCG Advanced)']]
+                print(tabulate(updates_needed_df, headers='keys', tablefmt='psql'))
                 print('Use Jupyter Notebook to better visualize the properties of cards that needs to be updated')
 
+            # Code block to handle Option 5
             elif answer == 5:
-                input_string = input(f"""
-            Insert the name of the card you would like to search (ONLY 1 CARD AT A TIME):
-            """)
+                input_string = input("Insert the name of the card you would like to search (ONLY 1 CARD AT A TIME):\t")
                 card_search = tcg.CardPriceScraper() # Instantiating a CardPriceScraper() object to scrape the site
                                                      # for prices of the card that was inputted
 
                 price_stats = card_search.price_searcher(input_string)
-                print(price_stats)
-                time.sleep(2) # Delaying 2 seconds before closing the browswer
+                price_stats_df = pd.DataFrame.from_dict(price_stats, orient = 'index', columns = [input_string]).transpose()
+                print(tabulate(price_stats_df, headers='keys', tablefmt='psql'))
+                time.sleep(1) # Delaying 1 second before closing the browswer
                 card_search.quit_browser()
 
+            # Code block to handle Option 6
             elif answer == 6:
                 card_names_list = []
-                input_string = input(f"""
-                Insert a card name (ONLY 1 AT A TIME):
-                """)
+                input_string = input("Insert a card name (ONLY 1 AT A TIME):\t")
 
                 while True: # Do-while loop to get all the cards the user inputted until he/she is satisfied
                     tosearch_df = duelist.search_card_name(input_string)
@@ -119,80 +121,68 @@ if __name__ == '__main__':
                         print('Card succesfully found in the database')
                     else:
                         pass
-                    input_string = input(f"""
-                    Insert another card name or type 'esc' to escape:
-                    """)
+                    input_string = input("Insert another card name or type 'esc' to escape:\t")
                     if input_string == 'esc':
                         break
 
-                card_bundle = tcg.CardPriceScraper() # Instantiating a CardPriceScraper() object to scrape the site
-                                                     # for prices of cards in the card bundle
-                card_bundle.set_card_prices(card_names_list, duelist)
-                card_prices = card_bundle.get_card_prices()
-                print(card_prices)
-                time.sleep(2) # Delaying 2 seconds before closing the browser
-                card_bundle.quit_browser()
+                if len(card_names_list) != 0:
+                    card_bundle = tcg.CardPriceScraper() # Instantiating a CardPriceScraper() object to scrape the site
+                                                         # for prices of cards in the card bundle
+                    card_bundle.set_card_prices(card_names_list, duelist)
+                    card_prices = card_bundle.get_card_prices()
+                    print(tabulate(card_prices, headers='keys', tablefmt='psql'))
+                    time.sleep(1) # Delaying 1 seconds before closing the browser
+                    card_bundle.quit_browser()
 
+            # Code block to handle Option 7
             elif answer == 7:
                 cards_to_buy = []
-                input_string = input(f"""
-                Insert a card name (ONLY 1 AT A TIME):
-                """)
+                input_string = input('Insert a card name (ONLY 1 AT A TIME):\t')
 
                 while True: # Do-while loop to get all the cards and the quantities of each card the user wants to purchase
                              # until he/she is satisfied
                     tosearch_df = duelist.search_card_name(input_string)
                     if len(tosearch_df) != 0:
-                        print('Card succesfully found in the database')
+                        print('Card succesfully found in the database.')
 
                         while True:
-                            input_quantity = input(f""""
-                            Input the number of {input_string} cards you want to buy:
-                            """)
+                            input_quantity = input(f"Input the number of {input_string} cards you want to buy:\t")
                             try:
                                 input_quantity = int(input_quantity)
                             except:
-                                print('That is not an integer, input an integer value!')
+                                print('\tThat is not an integer, input an integer value!')
                             else:
                                 cards_to_buy.append((input_string, input_quantity))
                                 break
                     else:
                         pass
-                    input_string = input(f"""
-                    Insert another card name or type 'esc' to escape:
-                    """)
+                    input_string = input("Insert another card name or type 'esc' to escape:\t")
                     if input_string == 'esc':
                         break
 
-                shopping_cart = tcg.BuyingTool(cards_to_buy, duelist)
-                normalprices_df = shopping_cart.get_normalprice_df()
-                totalprices_df = shopping_cart.get_totalprice_df()
-                cumulative_df = shopping_cart.get_cumulative_df()
+                if len(cards_to_buy) != 0:
+                    shopping_cart = tcg.BuyingTool(cards_to_buy, duelist)
+                    normalprices_df = shopping_cart.get_normalprice_df()
+                    totalprices_df = shopping_cart.get_totalprice_df()
+                    cumulative_df = shopping_cart.get_cumulative_df()
 
-                print(f"""
-                Base Prices of cards (Qty: 1)
-                {normalprices_df}
-                """)
+                    print('Base Prices of cards (Qty: 1) \n'
+                          f"{tabulate(normalprices_df, headers='keys', tablefmt='psql')}")
+                    print('\n')
+                    print('Total Prices of cards (Price x Qty) \n'
+                          f"{tabulate(totalprices_df, headers='keys', tablefmt='psql')}")
+                    print('\n')
+                    print('Potential Total Money Spent \n'
+                          f"{tabulate(cumulative_df, headers='keys', tablefmt='psql')}")
 
-                print(f"""
-                Total Prices of cards (Price x Qty)
-                {totalprices_df}
-                """)
+                    time.sleep(1) # Delay 1 second before closing browser
+                    shopping_cart.quit_browser()
 
-                print(f"""
-                Potential Total Money spent
-                {cumulative_df}
-                """)
-
-                time.sleep(2) # Delay 2 seconds before closing browser
-                shopping_cart.quit_browser()
-
-            answer = input(f"""
-            Would you like to choose anything else?
-
-            {OPTIONS}
-
-            Continue with 1 to {NUM_OPTIONS} or answer anything else besides those numbers to escape: """)
+            # Code-block to handle interface after the user selected and completed an option
+            print('\n')
+            answer = input("Would you like to choose anything else? \n"
+                           f"{OPTIONS} \n"
+                           f"Continue with 1 to {NUM_OPTIONS} or answer anything else besides those numbers to escape: ")
 
             try:
                 answer = int(answer)
