@@ -1,5 +1,17 @@
-# Yugioh-Python-Package
-Anything related to Yugioh (Card Database, Updating new cards, Banlist, Card Prices) are all here
+# Yugioh Web-Scraping Toolbox
+This is a personal project on creating a personal yugioh toolkit that allows anyone to access any yugioh card and see 
+its information conveniently. I noticed that the yugioh wiki website: https://yugioh.fandom.com is not particularly 
+user-friendly, especially when it comes to searching multiple cards through certain filters. The URLs of certain cards
+are missing when clicking on the next page button, and it takes a lot of time and effort to access a particular card in
+this way. This project is an attempt to alleviate this problem by scraping the entire website for all its card URLs and
+making my own personal card database. The toolbox will not only feature the entire Yugioh Card Database, but also functionalities
+that: 
+1) Updates the database based on new cards being added to the game
+2) Updates the competitive status of each card in the database from the most recent banlist
+3) Provides an interactive platform that searches the prices of cards I am interested in buying
+
+Potential idea expansion: Deck-building toolkit, and including servier-side capabilities through Django, machine learning functions 
+that shows which card I am interested in based on my previous purchases.
 
 <h2>yugioh Package</h2>
 <h3>Data</h3>
