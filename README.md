@@ -13,7 +13,19 @@ that:
 Potential idea expansion: Deck-building toolkit, and including server-side capabilities through Django, machine learning functions 
 that shows which card I am interested in based on my previous purchases.
 
+<b>Websites Scraped:</b>
+<ol>
+    <li>https://yugioh.fandom.com</li>
+    <li>https://www.yugioh-card.com/uk/gameplay/detail.php?id=1155</li>
+    <li>https://www.tcgplayer.com</li>
+</ol>
+
 <h2>yugioh Package</h2>
+<h3>Applications</h3>
+<ul>
+    <li><b>chromedriver.exe:</b> ChromeDriver executable app that works with the Selenium Python module to scrape dynamic websites
+    such as https://www.tcgplayer.com</li>
+</ul>
 <h3>Data</h3>
 <ul>
     <li><b>Yugioh Card Database.csv:</b> CSV file that contains 99% of Yugioh cards up to the current Link format</li>
