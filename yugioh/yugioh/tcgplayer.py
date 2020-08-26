@@ -212,7 +212,6 @@ class CardPriceScraper:
             self.driver.get('https://www.tcgplayer.com')
         except:
             raise Exception('Browser is already closed, unable to quit browser that is no longer open')
-            #print('Browser is already closed, unable to quit browser that is no longer open')
         else:
             try:
                 # Waiting for a certain content page to appear to bypass the broken pipe error
@@ -232,7 +231,7 @@ class CardPriceScraper:
         try:
             self.driver.get('https://www.tcgplayer.com/')
         except:
-            self.driver = webdriver.Chrome('C:\Program Files (x86)\Google\Chrome\Application\chromedriver.exe')
+            self.driver = webdriver.Chrome() # Restarting chrome based on its initial PATH location
             self.driver.get('https://www.tcgplayer.com/')
 
 
@@ -317,6 +316,7 @@ class BuyingTool(CardPriceScraper):
             same level as the yugioh package to access the database directly. A DbHanlder object is required
             to cross-reference the cards in the database with their prices
         """
+        self.cards_dict = {} # Resetting the dictionary of cards to be searched
         for cards in cards_to_buy:
             self.cards_dict[cards[0]] = cards[1]
         card_names = self.cards_dict.keys()
@@ -326,16 +326,16 @@ class BuyingTool(CardPriceScraper):
         # of the cards with their purchased quantities
         try:
             super().set_card_prices(card_names, filepath)
-        except Exception:
+        except KeyError:
             self.__normalprice_df = None
             self.__totalprice_df = None
             self.__cumulative_df = None
-            raise Exception('Check the spelling of your card!')
+            raise KeyError('Check the spelling of your card!')
         else:
             self.__normalprice_df = super().get_card_prices()
             if len(self.cards_dict) != 0:
                 self.__normalprice_df['Quantity'] = quantities
-    
+
             # Block of code to set the total_price dataframe, containing the Total price statistics
             # of the cards with their purchased quantities
             self.__totalprice_df = self.__normalprice_df.copy()
@@ -344,7 +344,7 @@ class BuyingTool(CardPriceScraper):
                     new_col = 'Total' + '(' + col + ')'
                     self.__totalprice_df.rename(columns = {col: new_col}, inplace = True)
                     self.__totalprice_df[new_col] = self.__totalprice_df.apply(lambda x: x[new_col] * x['Quantity'], axis = 1)
-    
+
             # Block of code to set the cummulative dataframe that contains the summation of Total
             # price statistics of each card, multiplied by their purchased quantities. These statistics
             # reflect the total amount of money the user will spend if they decide to go through with

@@ -131,7 +131,7 @@ def option6(duelist):
         card_bundle.set_card_prices(card_names_list)
         card_prices = card_bundle.get_card_prices()
         print(tabulate(card_prices, headers='keys', tablefmt='psql'))
-        time.sleep(1) # Delaying 1 seconds before closing the browser
+        time.sleep(1) # Delaying 1 second before closing the browser
         card_bundle.quit_browser()
 
 

@@ -482,14 +482,6 @@ class YgScraper:
 
         self.card_url_list.extend(list(set(card_url_list)))
 
-        # Automatically adding the card details of each card in card url list to the card_details instance variable
-        # for link in self.card_url_list:
-        #     try:
-        #         self.set_card_details(link)
-        #     except:
-        #          print(f'Check the url again {link} and see if there is anything fishy')
-        #          pass
-
     def add_card_urls(self, urls):
         """
         Method that adds any specified card urls to the current card_url_list
@@ -503,13 +495,6 @@ class YgScraper:
             urls = [urls]
         self.card_url_list.extend(urls)
         self.card_url_list = list(set(self.card_url_list))
-        # for link in self.card_url_list:
-        #     try:
-        #         self.set_card_details(link)
-        #     except:
-        #          print(f'Check the url again {link} and see if there is anything fishy')
-        #          pass
-
 
     def get_card_urls(self):
         """

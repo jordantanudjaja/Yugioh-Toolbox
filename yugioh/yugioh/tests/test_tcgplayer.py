@@ -28,8 +28,8 @@ class TestCardPriceSraper:
     """
     def test_webpage(self, card_bundle):
         assert card_bundle.driver.title == 'TCGplayer.com: Online Store for Magic: The Gathering, Yugioh, Cards, Sets, Packs, and Booster Boxes'
-   
-    
+
+
     @pytest.mark.parametrize(
     "card_names, expected_results",
     [('Cyber Dragon', 1),
@@ -40,14 +40,14 @@ class TestCardPriceSraper:
     )
     def test_check_card_names(self, card_bundle, card_names, expected_results):
         assert len(card_bundle.check_card_names(card_names, filepath = '../../Data/Yugioh Card Database.csv')) == expected_results
-    
-        
-    def test_price_searcher(self, card_bundle, monkeypatch):    
+
+
+    def test_price_searcher(self, card_bundle, monkeypatch):
         assert card_bundle.driver.find_element_by_id('autocomplete-input')
         assert card_bundle.price_searcher('cybEr drAGon') != {}
         assert card_bundle.price_searcher('sdgsdg') == {}
-        
-        
+
+
     def test_set_get_card_prices_combined_df(self, card_bundle):
         with pytest.raises(KeyError) as error:
             card_bundle.set_card_prices('sdgsd', filepath = '../../Data/Yugioh Card Database.csv')
@@ -55,22 +55,23 @@ class TestCardPriceSraper:
         card_bundle.set_card_prices('cYber DraGON', filepath = '../../Data/Yugioh Card Database.csv')
         assert len(card_bundle.get_card_prices()) == 1
         assert len(card_bundle.get_combined_df()) == 1
-      
-        
+
+
     def test_quit_browser(self, card_bundle):
         card_bundle.quit_browser()
         with pytest.raises(Exception) as error:
             card_bundle.quit_browser()
         assert str(error.value) == 'Browser is already closed, unable to quit browser that is no longer open'
-        
+
+
     def test_restart_browser(self, card_bundle):
         card_bundle.restart_browser()
         assert card_bundle.driver.current_url == 'https://www.tcgplayer.com/'
         card_bundle.price_searcher('sdgsdg')
         card_bundle.restart_browser()
         assert card_bundle.driver.current_url == 'https://www.tcgplayer.com/'
-        
-        
+
+
 @pytest.mark.seleniumtest
 class TestBuyingTool:
     def test_set_get_buying_prices_dfs(self):
@@ -78,9 +79,10 @@ class TestBuyingTool:
         assert len(shopping_cart.get_normalprice_df()) == 1
         assert len(shopping_cart.get_totalprice_df()) == 1
         assert len(shopping_cart.get_cumulative_df()) == 1
-        #with pytest.raises(Exception) as error:
-        shopping_cart.set_buying_dfs([('gsdg', 2)], filepath = '../../Data/Yugioh Card Database.csv')
-        #assert str(error.value) == 'Check the spelling of your card!'
+
+        with pytest.raises(KeyError) as error:
+            shopping_cart.set_buying_dfs([('gsdg', 2)], filepath = '../../Data/Yugioh Card Database.csv')
+            assert str(error.value) == 'Check the spelling of your card!'
         assert shopping_cart.get_normalprice_df() == None
         assert shopping_cart.get_totalprice_df() == None
         assert shopping_cart.get_cumulative_df() == None
