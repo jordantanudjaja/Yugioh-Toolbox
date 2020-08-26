@@ -10,8 +10,8 @@ that:
 2) Updates the competitive status of each card in the database from the most recent banlist
 3) Provides an interactive platform that searches the prices of cards I am interested in buying
 
-Potential idea expansion: Deck-building toolkit, and including server-side capabilities through Django, machine learning functions
-that shows which card I am interested in based on my previous purchases.
+Potential idea expansion: Deck-building toolkit, server-side capabilities through Django, and machine learning functions that shows
+which card I am interested in based on my previous purchases.
 
 <b>Websites Scraped:</b>
 <ol>
@@ -33,7 +33,7 @@ that shows which card I am interested in based on my previous purchases.
     <li><b>tcgplayer:</b> Module containing classes that scrapes the website: https://www.tcgplayer.com and searches
     the current card prices of cards the user is interested in buying and returns pre-defined price statistics</li>
 </ul>
-<h3>tests</h3>
+<h3>Unit Tests</h3>
 <ul>
     <li><b>pytest.ini:</b> File to setup user-defined markers for each testing function</li>
     <li><b>test_ygfandom:</b> Testing file to test the classes in the ygfandom module</li>
