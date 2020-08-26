@@ -65,7 +65,7 @@ class TestDbHandler:
         assert all(duelist.search_card_name('random name') == pd.DataFrame(columns = TestDbHandler.yugioh_columns))
         assert duelist.search_card_name('Cyber Dragon').index[0] == 4466
         assert duelist.search_card_name('cyber dragon').index[0] == 4466
-        assert all(duelist.search_card_name(['cybEr DrAgoN', 'sdgsdg', 'dARk simOrGH', 'Cyber DRAgon']).index == [4466, 7448])
+        assert set(duelist.search_card_name(['cybEr DrAgoN', 'sdgsdg', 'dARk simOrGH', 'Cyber DRAgon']).index) == {4466, 7448}
         assert all(df == duelist.get_card_database()) # Making sure that the Original Database is not changed
                                                       # after invoking the seach_card_name method
 

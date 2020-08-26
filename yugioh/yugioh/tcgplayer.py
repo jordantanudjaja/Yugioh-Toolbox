@@ -25,7 +25,7 @@ class CardPriceScraper:
     Class that scrapes the https://www.tcgplayer.com website and manipulates the site using
     Selenium to return the prices of whatever card the user is interested in looking at
     """
-    def __init__(self, PATH = 'External Applications/chromedriver.exe'):
+    def __init__(self, PATH = 'External Applications/chromedriver.exe', filepath = 'Data/Yugioh Card Database.csv'):
         """
         Parameters:
         -----------
@@ -34,6 +34,12 @@ class CardPriceScraper:
 
             File path for the chromedriver executable file
 
+        filepath: str
+            Default value: 'Data/Yugioh Card Database.csv'
+
+            Filepath that leads to the Yugioh Card Database to initialize a DbHandler Object. Default
+            value allows any python file in the same level as the yugioh package to access the database
+            directly
         Variables:
         ----------
         Public:
@@ -50,6 +56,7 @@ class CardPriceScraper:
         """
         self.driver = webdriver.Chrome(executable_path = PATH)
         self.driver.get('https://www.tcgplayer.com/')
+        self.filepath = filepath
         self.__card_prices_df = pd.DataFrame()
         self.__combined_df = pd.DataFrame()
 
@@ -85,13 +92,13 @@ class CardPriceScraper:
 
     def price_searcher(self, db_card_name):
         """
-            Returns a dictionary of price statistics of the card that has the same name as db_card_name
-            in the web page
+        Returns a dictionary of price statistics of the card that has the same name as db_card_name
+        in the web page
 
-            Parameters:
-            -----------
-            db_card_name: str
-                card name of the card to be searched
+        Parameters:
+        -----------
+        db_card_name: str
+            card name of the card to be searched
         """
         search = self.driver.find_element_by_id('autocomplete-input')
         search.send_keys(db_card_name)
@@ -150,7 +157,7 @@ class CardPriceScraper:
             return price_stats
 
 
-    def set_card_prices(self, card_names, filepath = 'Data/Yugioh Card Database.csv'):
+    def set_card_prices(self, card_names):
         """
         Set method that sets the card prices of the card names to be searched into a dataframe format
         for readability and also sets a combined dataframe that merges the card price dataframe with
@@ -161,14 +168,8 @@ class CardPriceScraper:
         card_names: str or list
             The name(s) of the cards that are to be searched and compared with the Yugioh Card Database.
             Punctuation, upper and lower case letters, and spelling matters
-
-        filepath: str
-            Default value: 'Data/Yugioh Card Database.csv'
-
-            Filepath that leads to the Yugioh Card Database. Default value allows any python file in the
-            same level as the yugioh package to access the database directly
         """
-        tosearch_df = self.check_card_names(card_names, filepath)
+        tosearch_df = self.check_card_names(card_names, self.filepath)
 
         if len(tosearch_df) == 0:
             raise KeyError('This card you inputted is not in the database!')
@@ -276,12 +277,12 @@ class BuyingTool(CardPriceScraper):
                 that includes the columns: Card Type, Competitive Status, and Reference
 
             normalprice_df: DataFrame()
-                Dataframe that contains the Normal price statistics of the cards with their
-                purchased quantities
+                Dataframe that contains the Normal price statistics (Price of 1 card) of the cards
+                with their purchased quantities
 
             totalprice_df: DataFrame()
-                Dataframe that contains the Total price statistics of the cards with their
-                purchased quantities
+                Dataframe that contains the Total price statistics (Price * Quantity) of the cards
+                with their purchased quantities
 
             cumulative_df: DataFrame()
                 Dataframe that contains the summation of Total price statistics of each card,
@@ -290,15 +291,51 @@ class BuyingTool(CardPriceScraper):
                 Represents the total amount of money the user will spend if they decide to go
                 through with their choice
         """
-        super().__init__(PATH = PATH)
+        super().__init__(PATH = PATH, filepath = filepath)
         self.cards_dict = {}
-        self.set_buying_dfs(cards_to_buy, filepath)
+        self.set_buying_dfs(cards_to_buy)
         self.__normalprice_df = self.get_normalprice_df()
         self.__totalprice_df = self.get_totalprice_df()
         self.__cumulative_df = self.get_cumulative_df()
 
+    def __internal_calculations(self):
+        """
+        Calculates the different price statistics of each card the user is interested in and sets it to a
+        dataframe format
 
-    def set_buying_dfs(self, cards_to_buy, filepath = 'Data/Yugioh Card Database.csv'):
+        Private Method that is invoked in the set_buying_dfs and add_to_cart method
+        """
+        self.__normalprice_df = ( super().get_card_prices()
+                                         .reset_index()
+                                         .rename(columns = {'index': 'Card Name'}) )
+        if len(self.cards_dict) != 0:
+            self.__normalprice_df['Quantity'] = self.__normalprice_df['Card Name'].apply(lambda x: self.cards_dict[x.lower()])
+            self.__normalprice_df.set_index('Card Name', inplace = True)
+
+        # Block of code to set the total_price dataframe, containing the Total price statistics
+        # of the cards with their purchased quantities
+        self.__totalprice_df = self.__normalprice_df.copy()
+        for col in self.__totalprice_df.columns:
+            if col != 'Quantity':
+                new_col = 'Total' + '(' + col + ')'
+                self.__totalprice_df.rename(columns = {col: new_col}, inplace = True)
+                self.__totalprice_df[new_col] = self.__totalprice_df.apply(lambda x: x[new_col] * x['Quantity'], axis = 1)
+
+        # Block of code to set the cummulative dataframe that contains the summation of Total
+        # price statistics of each card, multiplied by their purchased quantities. These statistics
+        # reflect the total amount of money the user will spend if they decide to go through with
+        # their choice
+        if len(self.__totalprice_df) != 0:
+            self.__cumulative_df = ( self.__totalprice_df.sum()
+                                                         .to_frame()
+                                                         .rename(columns = {0: 'Cumulative Total'})
+                                                         .transpose()
+                                                         .rename(columns = {'Quantity': 'Total no. of cards'}) )
+            self.__cumulative_df['Total no. of cards'] = self.__cumulative_df['Total no. of cards'].astype('int32')
+        else:
+            self.__cumulative_df = pd.DataFrame()
+
+    def set_buying_dfs(self, cards_to_buy):
         """
         Set method that takes in a DbHandler() object from ygfandom module and sets
         multiple dataframes containing the cards to be purchased, their quantities and
@@ -307,57 +344,25 @@ class BuyingTool(CardPriceScraper):
         Parameters:
         -----------
         cards_to_buy: iterable of 2-element tuples
-            first element is the card name and second element is the quantity to be bought
-
-        filepath: str
-            Default value: 'Data/Yugioh Card Database.csv'
-
-            Filepath that leads to the Yugioh Card Database. Default value allows any python file in the
-            same level as the yugioh package to access the database directly. A DbHanlder object is required
-            to cross-reference the cards in the database with their prices
+            First element is the card name and second element is the quantity to be bought
         """
         self.cards_dict = {} # Resetting the dictionary of cards to be searched
-        for cards in cards_to_buy:
-            self.cards_dict[cards[0]] = cards[1]
+        for card in cards_to_buy:
+            self.cards_dict[card[0].lower()] = card[1]
         card_names = self.cards_dict.keys()
-        quantities = self.cards_dict.values()
 
         # Block of code to set the normal_price dataframe, containing the Normal price statistics
         # of the cards with their purchased quantities
         try:
-            super().set_card_prices(card_names, filepath)
+            super().set_card_prices(card_names)
         except KeyError:
             self.__normalprice_df = None
             self.__totalprice_df = None
             self.__cumulative_df = None
+            self.cards_dict = {}
             raise KeyError('Check the spelling of your card!')
         else:
-            self.__normalprice_df = super().get_card_prices()
-            if len(self.cards_dict) != 0:
-                self.__normalprice_df['Quantity'] = quantities
-
-            # Block of code to set the total_price dataframe, containing the Total price statistics
-            # of the cards with their purchased quantities
-            self.__totalprice_df = self.__normalprice_df.copy()
-            for col in self.__totalprice_df.columns:
-                if col != 'Quantity':
-                    new_col = 'Total' + '(' + col + ')'
-                    self.__totalprice_df.rename(columns = {col: new_col}, inplace = True)
-                    self.__totalprice_df[new_col] = self.__totalprice_df.apply(lambda x: x[new_col] * x['Quantity'], axis = 1)
-
-            # Block of code to set the cummulative dataframe that contains the summation of Total
-            # price statistics of each card, multiplied by their purchased quantities. These statistics
-            # reflect the total amount of money the user will spend if they decide to go through with
-            # their choice
-            if len(self.__totalprice_df) != 0:
-                self.__cumulative_df = ( self.__totalprice_df.sum()
-                                                             .to_frame()
-                                                             .rename(columns = {0: 'Cumulative Total'})
-                                                             .transpose()
-                                                             .rename(columns = {'Quantity': 'Total no. of cards'}) )
-                self.__cumulative_df['Total no. of cards'] = self.__cumulative_df['Total no. of cards'].astype('int32')
-            else:
-                self.__cumulative_df = pd.DataFrame()
+            self.__internal_calculations()
 
     def get_normalprice_df(self):
         """
@@ -382,3 +387,63 @@ class BuyingTool(CardPriceScraper):
         to go through with their choice
         """
         return self.__cumulative_df
+
+    def add_to_cart(self, cards_to_buy):
+        """
+        Add cards to the existing card_dict that acts as the shopping cart
+
+        Parameters:
+        -----------
+        cards_to_buy: iterable of 2-element tuples
+            First element is the card name and second element is the quantity to be bought
+        """
+        for card in cards_to_buy:
+            if card[0].lower() in self.cards_dict.keys():
+                self.cards_dict[card[0].lower()] += card[1]
+            else:
+                self.cards_dict[card[0].lower()] = card[1]
+        card_names = self.cards_dict.keys()
+
+        try:
+            super().set_card_prices(card_names)
+        except KeyError:
+            pass
+        else:
+            self.__internal_calculations()
+
+            # Block of code to delete keys that are not found in the Yugioh Card Database from the card_dict
+            deleted_keys = []
+            for key in self.cards_dict.keys():
+                if key not in [name.lower() for name in self.__normalprice_df.index]:
+                    deleted_keys.append(key)
+            for key in deleted_keys:
+                del self.cards_dict[key]
+
+    def remove_from_cart(self, cards_to_remove):
+        """
+        Remove existing cards and their specified quantities from the existing card_dict which acts
+        as the shopping cart
+
+        Parameters:
+        -----------
+        cards_to_remove: iterable of 2-element tuples
+            First element is the card name and the second element is the quantity to be removed
+        """
+        deleted_keys = []
+        for card in cards_to_remove:
+            if card[0].lower() in self.cards_dict.keys():
+                self.cards_dict[card[0].lower()] -= card[1]
+                if self.cards_dict[card[0].lower()] <= 0:
+                    deleted_keys.append(card[0].lower())
+            else:
+                pass
+        for key in deleted_keys:
+            del self.cards_dict[key]
+        card_names = self.cards_dict.keys()
+
+        try:
+            super().set_card_prices(card_names)
+        except KeyError:
+            pass
+        else:
+            self.__internal_calculations()

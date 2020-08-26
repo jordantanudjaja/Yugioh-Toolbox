@@ -120,7 +120,7 @@ class DbHandler:
                 else:
                     name.remove(name_tracker) # Removing the erroneous card name
             else:
-                return self.__card_database.iloc[indexes_to_search].sort_index()
+                return self.__card_database.iloc[indexes_to_search] # Cannot sort the index because it will cause logic errors in the tcgplayer class
 
     def locate_card(self, card_url):
         """

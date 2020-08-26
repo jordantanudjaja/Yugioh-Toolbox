@@ -14,7 +14,7 @@ import pytest
 
 @pytest.fixture(scope = 'module')
 def card_bundle():
-    card_bundle = tcg.CardPriceScraper(PATH = '../../External Applications/chromedriver.exe')
+    card_bundle = tcg.CardPriceScraper(PATH = '../../External Applications/chromedriver.exe', filepath = '../../Data/Yugioh Card Database.csv')
     return card_bundle
 
 @pytest.mark.seleniumtest
@@ -46,9 +46,9 @@ class TestCardPriceSraper:
 
     def test_set_get_card_prices_combined_df(self, card_bundle):
         with pytest.raises(KeyError) as error:
-            card_bundle.set_card_prices('sdgsd', filepath = '../../Data/Yugioh Card Database.csv')
+            card_bundle.set_card_prices('sdgsd')
         assert str(error.value) == "'This card you inputted is not in the database!'"
-        card_bundle.set_card_prices('cYber DraGON', filepath = '../../Data/Yugioh Card Database.csv')
+        card_bundle.set_card_prices('cYber DraGON')
         assert len(card_bundle.get_card_prices()) == 1
         assert len(card_bundle.get_combined_df()) == 1
 
@@ -68,17 +68,53 @@ class TestCardPriceSraper:
         assert card_bundle.driver.current_url == 'https://www.tcgplayer.com/'
 
 
+@pytest.fixture(scope = 'module')
+def shopping_cart():
+    shopping_cart = tcg.BuyingTool([('Cyber Dragon', 3)], PATH = '../../External Applications/chromedriver.exe', filepath = '../../Data/Yugioh Card Database.csv')
+    return shopping_cart
+
 @pytest.mark.seleniumtest
 class TestBuyingTool:
-    def test_set_get_buying_prices_dfs(self):
-        shopping_cart = tcg.BuyingTool([('Cyber Dragon', 3)], PATH = '../../External Applications/chromedriver.exe', filepath = '../../Data/Yugioh Card Database.csv')
+    def test_set_get_buying_prices_dfs(self, shopping_cart):
         assert len(shopping_cart.get_normalprice_df()) == 1
         assert len(shopping_cart.get_totalprice_df()) == 1
         assert len(shopping_cart.get_cumulative_df()) == 1
 
         with pytest.raises(KeyError) as error:
-            shopping_cart.set_buying_dfs([('gsdg', 2)], filepath = '../../Data/Yugioh Card Database.csv')
+            shopping_cart.set_buying_dfs([('gsdg', 2)])
             assert str(error.value) == 'Check the spelling of your card!'
         assert shopping_cart.get_normalprice_df() == None
         assert shopping_cart.get_totalprice_df() == None
         assert shopping_cart.get_cumulative_df() == None
+
+
+    def test_add_to_cart(self, shopping_cart):
+        shopping_cart.add_to_cart([('dark MagicIAn', 4), ('dark SimORgh', 7)])
+        assert len(shopping_cart.get_normalprice_df()) == 2
+        assert len(shopping_cart.get_totalprice_df()) == 2
+        assert len(shopping_cart.get_cumulative_df()) == 1
+        assert shopping_cart.get_normalprice_df()['Quantity'].loc['Dark Magician'] == 4
+        assert shopping_cart.get_cumulative_df()['Total no. of cards'].loc['Cumulative Total'] == 11
+
+        shopping_cart.add_to_cart([('khjn', 4), ('cyBer drAgon', 4)])
+        assert len(shopping_cart.get_normalprice_df()) == 3
+        assert len(shopping_cart.get_totalprice_df()) == 3
+        assert len(shopping_cart.get_cumulative_df()) == 1
+        assert shopping_cart.get_normalprice_df()['Quantity'].loc['Cyber Dragon'] == 4
+        assert shopping_cart.get_cumulative_df()['Total no. of cards'].loc['Cumulative Total'] == 15
+
+        shopping_cart.add_to_cart([('DARK SIMORGH', 3)])
+        assert shopping_cart.get_normalprice_df()['Quantity'].loc['Dark Simorgh'] == 10
+        assert shopping_cart.cards_dict == {'dark magician': 4, 'dark simorgh': 10, 'cyber dragon': 4}
+
+
+    def test_remove_from_cart(self, shopping_cart):
+        shopping_cart.remove_from_cart([('DarK SiMoRGH', 5)])
+        assert shopping_cart.cards_dict == {'dark magician': 4, 'dark simorgh': 5, 'cyber dragon': 4}
+        assert shopping_cart.get_normalprice_df()['Quantity'].loc['Dark Simorgh'] == 5
+
+        shopping_cart.remove_from_cart([('slgks', 2), ('CyBER DraGoN', 89)])
+        assert shopping_cart.cards_dict == {'dark magician': 4, 'dark simorgh': 5}
+        assert len(shopping_cart.get_normalprice_df()) == 2
+        assert len(shopping_cart.get_totalprice_df()) == 2
+        assert shopping_cart.get_cumulative_df()['Total no. of cards'].loc['Cumulative Total'] == 9
