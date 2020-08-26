@@ -10,16 +10,12 @@ create this in development mode in a virtual environment
 """
 
 from yugioh import tcgplayer as tcg
-#from selenium import webdriver
 import pytest
 
 @pytest.fixture(scope = 'module')
 def card_bundle():
     card_bundle = tcg.CardPriceScraper(PATH = '../../External Applications/chromedriver.exe')
     return card_bundle
-    #yield driver
-    #driver.quit()
-
 
 @pytest.mark.seleniumtest
 class TestCardPriceSraper:
