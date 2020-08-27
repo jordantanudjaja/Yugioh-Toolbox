@@ -1,4 +1,4 @@
-# Yugioh Web-Scraping Toolbox
+# Yugioh Toolbox
 This is a personal project on creating a personal yugioh toolkit that allows anyone to access any yugioh card and see
 its information conveniently. I noticed that the yugioh wiki website: https://yugioh.fandom.com is not particularly
 user-friendly, especially when it comes to searching multiple cards through certain filters. The URLs of certain cards
