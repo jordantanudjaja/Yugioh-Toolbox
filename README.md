@@ -78,7 +78,7 @@ Python Script that provides the user with an interface to interact with the Yugi
     <li>Updating new cards to the database individually or in small amounts using their own unique URL</li>
     <li>Updating new cards to the database through a card set URL, such as booster pack or structure decks</li>
     <li>Updating the competitive status of the cards through cross-referencing with the current banlist</li>
-    <li>Doing a regulatory checkup and seeing if there is any errors in adding new cards or if
+    <li>Doing a regulatory checkup and seeing if there are any errors in adding new cards or if
     there is a need to update status of existing cards </li>
     <li>Checking current prices of any Yugioh card (even those not in the Yugioh Card Database)</li>
     <li>Checking the current prices of a card/cards that are only in the current Yugioh Card Database</li>
