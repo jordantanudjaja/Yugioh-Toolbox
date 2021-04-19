@@ -69,7 +69,7 @@ which card I am interested in based on my previous purchases.
 
 <h2>setup.py</h2>
 <p>Setup file that is used to make this yugioh project directory as the root directory and the yugioh package an actual local
-Python Package. This allows modules to be imported interchangeably in jupyter notebooks and python scrips without incurring
+Python Package. This allows modules to be imported interchangeably in jupyter notebooks and python scripts without incurring
 an Import or ModuleNotFound Error</p>
 
 <h2>yginterface.py</h2>
