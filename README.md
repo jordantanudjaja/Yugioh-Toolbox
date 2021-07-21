@@ -20,7 +20,9 @@ which card I am interested in based on my previous purchases.
     <li>https://www.tcgplayer.com</li>
 </ol>
 
-<b>Compiled Yugioh Card Database (until Eternity Code Pack):</b> https://docs.google.com/spreadsheets/d/1dcsQbPIsVzYxvlg6W6bzuq4Lp9-LKN2Gi1yaokfrkwQ/edit?usp=sharing
+<b>Compiled Yugioh Card Database (until Eternity Code Pack):</b>
+<br>
+https://docs.google.com/spreadsheets/d/1dcsQbPIsVzYxvlg6W6bzuq4Lp9-LKN2Gi1yaokfrkwQ/edit?usp=sharing
 
 <h1>yugioh Project Directory</h1>
 <h2>yugioh Package</h2>
