@@ -21,7 +21,7 @@ which card I am interested in based on my previous purchases.
 </ol>
 
 <b>Database (until Eternity Code Pack):</b>
-<a href="https://docs.google.com/spreadsheets/d/1dcsQbPIsVzYxvlg6W6bzuq4Lp9-LKN2Gi1yaokfrkwQ/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Yugioh Card Database</a>
+<a href="https://docs.google.com/spreadsheets/d/1dcsQbPIsVzYxvlg6W6bzuq4Lp9-LKN2Gi1yaokfrkwQ/edit?usp=sharing">Yugioh Card Database</a>
 
 <h1>yugioh Project Directory</h1>
 <h2>yugioh Package</h2>
